@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.7.6;
 
-import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {Address} from "@openzeppelin/contracts/utils/Address.sol";
-import {Base64} from "lib/base64/base64.sol";
+import {ERC721} from "../lib/openzeppelin-contracts/contracts/token/ERC721/ERC721.sol";
+import {Ownable} from "../lib/openzeppelin-contracts/contracts/access/Ownable.sol";
+import {Address} from "../lib/openzeppelin-contracts/contracts/utils/Address.sol";
+import {Base64} from "../lib/base64/base64.sol";
 
 /// @title PuppyRaffle
 /// @author PuppyLoveDAO

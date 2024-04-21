@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.7.6;
 
-import {Script} from "forge-std/Script.sol";
+import {Script} from "../lib/forge-std/src/Script.sol";
 import {PuppyRaffle} from "../src/PuppyRaffle.sol";
 
 contract DeployPuppyRaffle is Script {
