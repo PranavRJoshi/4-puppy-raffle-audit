@@ -25,6 +25,7 @@ This project is to enter a raffle to win a cute dog NFT. The protocol should do 
   - [Compatibilities](#compatibilities)
 - [Roles](#roles)
 - [Known Issues](#known-issues)
+- [Misc](#misc)
 
 # Getting Started
 
@@ -92,3 +93,7 @@ Player - Participant of the raffle, has the power to enter the raffle with the `
 # Known Issues
 
 None
+
+# Misc
+
+Hello, World!
