@@ -80,6 +80,7 @@ contract PuppyRaffle is ERC721, Ownable {
         // q What if the number of players was 0?
         require(msg.value == entranceFee * newPlayers.length, "PuppyRaffle: Must send enough to enter raffle");
         for (uint256 i = 0; i < newPlayers.length; i++) {
+            // q what resets the players array?
             players.push(newPlayers[i]);
         }
 
@@ -100,6 +101,7 @@ contract PuppyRaffle is ERC721, Ownable {
         require(playerAddress == msg.sender, "PuppyRaffle: Only the player can refund");
         require(playerAddress != address(0), "PuppyRaffle: Player already refunded, or is not active");
 
+        // @audit Reentrancy
         payable(msg.sender).sendValue(entranceFee);
 
         players[playerIndex] = address(0);
@@ -115,6 +117,8 @@ contract PuppyRaffle is ERC721, Ownable {
                 return i;
             }
         }
+        // q what if the index of the player is 0?
+        // @audit if the index of the player is 0, then the player might think they are not active
         return 0;
     }
 
